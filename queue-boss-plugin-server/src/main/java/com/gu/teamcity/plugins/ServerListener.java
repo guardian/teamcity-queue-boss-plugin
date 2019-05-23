@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ServerListener extends BuildServerAdapter {
 
@@ -30,17 +31,16 @@ public class ServerListener extends BuildServerAdapter {
 
         @NotNull List<QueuedBuildEx> items = myQueueEx.getItemsEx();
 
-        Map<String, List<BuildPromotionEx>> groupedByProjectId =
-                items.stream().map(QueuedBuildEx::getBuildPromotion).collect(
-                        Collectors.groupingBy(BuildPromotionEx::getProjectId)
-                );
-
         myQueue.applyOrder(
                 items.stream()
                         .map(QueuedBuildEx::getBuildPromotion)
                         .sorted(MASTER_BRANCH_FIRST_COMPARATOR
                                 .thenComparing(
-                                        getFairProjectDistributionComparator(groupedByProjectId)
+                                        getFairProjectDistributionComparator(
+                                                groupProjectsByOriginProjectIdPart(
+                                                    items.stream().map(QueuedBuildEx::getBuildPromotion)
+                                                )
+                                        )
                                 )
                                 .thenComparing(BUILD_ID_COMPARATOR)
                         )
@@ -51,8 +51,20 @@ public class ServerListener extends BuildServerAdapter {
 
     }
 
+    public static Map<String, List<BuildPromotionEx>> groupProjectsByOriginProjectIdPart(Stream<BuildPromotionEx> buildPromotions){
+        return buildPromotions.collect(
+                Collectors.groupingBy(build ->
+                        originProjectIdPart(build.getProjectId())
+                )
+        );
+    }
+
     private static boolean branchIsMaster(Branch branch) {
         return branch.getName().equals(Branch.DEFAULT_BRANCH_NAME) || branch.getName().toLowerCase().trim().equals("master");
+    }
+
+    private static String originProjectIdPart(String projectId) {
+        return projectId==null ? null : projectId.split("_")[0];
     }
 
     public static final Comparator<BuildPromotionEx> MASTER_BRANCH_FIRST_COMPARATOR = (buildOne, buildTwo) -> {
@@ -81,10 +93,13 @@ public class ServerListener extends BuildServerAdapter {
     public static Comparator<BuildPromotionEx> getFairProjectDistributionComparator(Map<String, List<BuildPromotionEx>> groupedByProjectId) {
         return (buildOne, buildTwo) -> {
 
-            int positionAmongBuildsOfSameProjectForBuildOne = groupedByProjectId.get(buildOne.getProjectId()).indexOf(buildOne);
-            int positionAmongBuildsOfSameProjectForBuildTwo = groupedByProjectId.get(buildTwo.getProjectId()).indexOf(buildTwo);
+            int buildOnesPositionAmongBuildsOfSameProject =
+                    groupedByProjectId.get(originProjectIdPart(buildOne.getProjectId())).indexOf(buildOne);
 
-            return positionAmongBuildsOfSameProjectForBuildOne - positionAmongBuildsOfSameProjectForBuildTwo;
+            int buildTwosPositionAmongBuildsOfSameProject =
+                    groupedByProjectId.get(originProjectIdPart(buildTwo.getProjectId())).indexOf(buildTwo);
+
+            return buildOnesPositionAmongBuildsOfSameProject - buildTwosPositionAmongBuildsOfSameProject;
 
         };
     }

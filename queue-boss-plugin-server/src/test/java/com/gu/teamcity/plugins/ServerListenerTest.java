@@ -53,47 +53,48 @@ public class ServerListenerTest {
     @Test
     public void testFairProjectDistributionComparator() {
         final BuildPromotionEx zero = mock(BuildPromotionEx.class);
-        when(zero.getProjectId()).thenReturn("flood");
+        when(zero.getProjectId()).thenReturn("flood_subA");
         final BuildPromotionEx one = mock(BuildPromotionEx.class);
-        when(one.getProjectId()).thenReturn("flood");
+        when(one.getProjectId()).thenReturn("flood_subB");
         final BuildPromotionEx two = mock(BuildPromotionEx.class);
         when(two.getProjectId()).thenReturn("oneoff");
         final BuildPromotionEx three = mock(BuildPromotionEx.class);
         when(three.getProjectId()).thenReturn("twoofthisone");
         final BuildPromotionEx four = mock(BuildPromotionEx.class);
-        when(four.getProjectId()).thenReturn("flood");
+        when(four.getProjectId()).thenReturn("flood_subC");
         final BuildPromotionEx five = mock(BuildPromotionEx.class);
         when(five.getProjectId()).thenReturn("twoofthisone");
         final BuildPromotionEx six = mock(BuildPromotionEx.class);
-        when(six.getProjectId()).thenReturn("flood");
+        when(six.getProjectId()).thenReturn("flood_subA");
         final BuildPromotionEx seven = mock(BuildPromotionEx.class);
         when(seven.getProjectId()).thenReturn("threeofthisone");
         final BuildPromotionEx eight = mock(BuildPromotionEx.class);
-        when(eight.getProjectId()).thenReturn("flood");
+        when(eight.getProjectId()).thenReturn("flood_subB");
         final BuildPromotionEx nine = mock(BuildPromotionEx.class);
         when(nine.getProjectId()).thenReturn("threeofthisone");
         final BuildPromotionEx ten = mock(BuildPromotionEx.class);
-        when(ten.getProjectId()).thenReturn("flood");
+        when(ten.getProjectId()).thenReturn("flood_subC");
         final BuildPromotionEx eleven = mock(BuildPromotionEx.class);
         when(eleven.getProjectId()).thenReturn("threeofthisone");
         final BuildPromotionEx twelve = mock(BuildPromotionEx.class);
-        when(twelve.getProjectId()).thenReturn("flood");
+        when(twelve.getProjectId()).thenReturn("flood_subA");
         final BuildPromotionEx thirteen = mock(BuildPromotionEx.class);
-        when(thirteen.getProjectId()).thenReturn("flood");
+        when(thirteen.getProjectId()).thenReturn("flood_subB");
         final BuildPromotionEx fourteen = mock(BuildPromotionEx.class);
-        when(fourteen.getProjectId()).thenReturn("flood");
+        when(fourteen.getProjectId()).thenReturn("flood_subC");
 
         List<BuildPromotionEx> input = Arrays.asList(
                 zero, one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen
         );
 
-        input.sort(ServerListener.getFairProjectDistributionComparator(input.stream().collect(
-                Collectors.groupingBy(BuildPromotionEx::getProjectId)
-        )));
+        // mutation...
+        input.sort(ServerListener.getFairProjectDistributionComparator(
+                ServerListener.groupProjectsByOriginProjectIdPart(input.stream())
+        ));
 
         String[] expected = {
-                "flood", "oneoff", "twoofthisone", "threeofthisone", "flood", "twoofthisone", "threeofthisone",
-                "flood", "threeofthisone", "flood", "flood", "flood", "flood", "flood", "flood"
+                "flood_subA", "oneoff", "twoofthisone", "threeofthisone", "flood_subB", "twoofthisone", "threeofthisone",
+                "flood_subC", "threeofthisone", "flood_subA", "flood_subB", "flood_subC", "flood_subA", "flood_subB", "flood_subC"
         };
 
         assertArrayEquals(
