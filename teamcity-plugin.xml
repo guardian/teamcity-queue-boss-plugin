@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:schemas-jetbrains-com:teamcity-plugin-v1-xml">
+  <info>
+    <name>queue-boss-plugin</name>
+    <display-name>queue-boss-plugin</display-name>
+    <version>@Version@</version>
+    <description>
+      TeamCity plugin to automatically re-prioritise the build queue as new builds come in
+        - First prioritises builds of `master` (aka `&lt;default&gt;`) thereby ensuring continuous deployments go out in a timely fashion (rather than being stuck behind dev branches)
+        - Then attempts to fairly distribute the queued builds based on the (top-level) project they belong to, in the hope of avoiding big blocks of time while certain projects hog the queue
+    </description>
+    <download-url>https://github.com/guardian/teamcity-queue-boss-plugin</download-url>
+    <vendor>
+      <name>@VendorName@</name>
+      <url>@VendorURL@</url>
+    </vendor>
+  </info>
+  <deployment use-separate-classloader="true"/>
+</teamcity-plugin>
